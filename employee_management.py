@@ -6,8 +6,9 @@
 import csv
 import os
 
-# CSV File Name constant
-FILE_NAME = "employees.csv"
+# CSV File path (anchored to this script's directory)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FILE_NAME = os.path.join(BASE_DIR, "employees.csv")
 
 # Field names for CSV storage
 FIELDNAMES = ["employee_id", "name", "age", "department", "email", "salary"]
