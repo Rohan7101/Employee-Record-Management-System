@@ -205,7 +205,11 @@ def update_employee():
     """
     print("\n--- Update Employee ---")
 
-    employee_id = input("Enter Employee ID to update: ").strip()
+    employee_id = input("Enter Employee ID to update (or 'c' to cancel): ").strip()
+    if employee_id.lower() == "c":
+        print("Update cancelled.")
+        return
+
     if not employee_id:
         print("Employee ID cannot be empty.")
         return
@@ -224,40 +228,74 @@ def update_employee():
                 if row["employee_id"] == employee_id:
                     found = True
                     print(f"\nEmployee found with Name: {row['name']}, Department: {row['department']}")
+                    print("(Press Enter to keep current value, or 'c' to cancel update)")
 
-                    # Prompt for updated values
-                    new_name = input("Enter new Name: ").strip()
-                    if not new_name:
-                        print("Name cannot be empty. Update cancelled.")
+                    # Name update
+                    name_input = input(f"Enter new Name [{row['name']}]: ").strip()
+                    if name_input.lower() == "c":
+                        print("Update cancelled.")
                         return
+                    if name_input:
+                        new_name = name_input
+                    else:
+                        new_name = row["name"]
 
-                    try:
-                        new_age = int(input("Enter new Age: ").strip())
-                        if new_age < 18 or new_age > 65:
-                            print("Invalid age. Age must be between 18 and 65. Update cancelled.")
+                    # Age update
+                    age_input = input(f"Enter new Age [{row['age']}]: ").strip()
+                    if age_input.lower() == "c":
+                        print("Update cancelled.")
+                        return
+                    if age_input:
+                        try:
+                            new_age = int(age_input)
+                            if new_age < 18 or new_age > 65:
+                                print("Invalid age. Age must be between 18 and 65. Update cancelled.")
+                                return
+                        except ValueError:
+                            print("Invalid input. Please enter a number for age. Update cancelled.")
                             return
-                    except ValueError:
-                        print("Invalid input. Please enter a number for age. Update cancelled.")
-                        return
+                    else:
+                        new_age = row["age"]
 
-                    new_dept = input("Enter new Department: ").strip()
-                    if not new_dept:
-                        print("Department cannot be empty. Update cancelled.")
+                    # Department update
+                    dept_input = input(f"Enter new Department [{row['department']}]: ").strip()
+                    if dept_input.lower() == "c":
+                        print("Update cancelled.")
                         return
+                    if dept_input:
+                        new_dept = dept_input
+                    else:
+                        new_dept = row["department"]
 
-                    new_email = input("Enter new Email: ").strip()
-                    if not new_email or "@" not in new_email or "." not in new_email:
-                        print("Invalid email format. Update cancelled.")
+                    # Email update
+                    email_input = input(f"Enter new Email [{row['email']}]: ").strip()
+                    if email_input.lower() == "c":
+                        print("Update cancelled.")
                         return
-
-                    try:
-                        new_salary = float(input("Enter new Salary: ").strip())
-                        if new_salary < 0:
-                            print("Salary cannot be negative. Update cancelled.")
+                    if email_input:
+                        if "@" not in email_input or "." not in email_input:
+                            print("Invalid email format. Update cancelled.")
                             return
-                    except ValueError:
-                        print("Invalid input. Please enter a number for salary. Update cancelled.")
+                        new_email = email_input
+                    else:
+                        new_email = row["email"]
+
+                    # Salary update
+                    salary_input = input(f"Enter new Salary [{row['salary']}]: ").strip()
+                    if salary_input.lower() == "c":
+                        print("Update cancelled.")
                         return
+                    if salary_input:
+                        try:
+                            new_salary = float(salary_input)
+                            if new_salary < 0:
+                                print("Salary cannot be negative. Update cancelled.")
+                                return
+                        except ValueError:
+                            print("Invalid input. Please enter a number for salary. Update cancelled.")
+                            return
+                    else:
+                        new_salary = row["salary"]
 
                     # Update the record dictionary
                     row["name"] = new_name
