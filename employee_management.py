@@ -1,114 +1,84 @@
-# ==========================================================
-# MCA Semester I - Python Programming & Relational Database
-# Assignment 1: Employee Record Management System
-# ==========================================================
-
 import csv
 import os
 
-# CSV File path (anchored to this script's directory)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-FILE_NAME = os.path.join(BASE_DIR, "employees.csv")
-
-# Field names for CSV storage
+FILE_NAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), "employees.csv")
 FIELDNAMES = ["employee_id", "name", "age", "department", "email", "salary"]
 
 
-def create_file():
-    """
-    Creates the CSV file with appropriate headers if it does not already exist.
-    """
+def load_employees():
+    employees = []
+    if not os.path.exists(FILE_NAME):
+        return employees
     try:
-        if not os.path.exists(FILE_NAME):
-            with open(FILE_NAME, mode="w", newline="", encoding="utf-8") as file:
-                writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
-                writer.writeheader()
-    except (PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
-
-
-def check_employee_exists(employee_id):
-    """
-    Checks if an employee ID already exists in the CSV file.
-    Returns True if found, False otherwise.
-    """
-    try:
-        if not os.path.exists(FILE_NAME):
-            return False
-
         with open(FILE_NAME, mode="r", newline="", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                if row["employee_id"] == employee_id:
-                    return True
-        return False
-    except (FileNotFoundError, PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
+                employees.append(row)
+    except OSError as e:
+        print(f"Error reading file: {e}")
+    return employees
+
+
+def save_employees(employees):
+    try:
+        with open(FILE_NAME, mode="w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+            writer.writeheader()
+            writer.writerows(employees)
+        return True
+    except OSError as e:
+        print(f"Error saving to file: {e}")
         return False
 
 
 def add_employee():
-    """
-    Prompts user for employee details, validates input,
-    and appends the new record to the CSV file.
-    """
-    print("\n--- Add New Employee ---")
+    employees = load_employees()
 
-    # Validate Employee ID
-    employee_id = input("Enter Employee ID: ").strip()
-    if not employee_id:
+    emp_id = input("Enter Employee ID: ").strip()
+    if not emp_id:
         print("Employee ID cannot be empty.")
         return
 
-    if not employee_id.isdigit():
-        print("Invalid input. Employee ID must be a numeric value.")
-        return
+    for emp in employees:
+        if emp["employee_id"] == emp_id:
+            print("Employee ID already exists.")
+            return
 
-    if check_employee_exists(employee_id):
-        print("Employee ID already exists.")
-        return
-
-    # Validate Name
     name = input("Enter Name: ").strip()
     if not name:
         print("Name cannot be empty.")
         return
 
-    # Validate Age
     try:
         age = int(input("Enter Age: ").strip())
-        if age < 18 or age > 65:
-            print("Invalid age. Age must be between 18 and 65.")
+        if age <= 0:
+            print("Age must be greater than 0.")
             return
     except ValueError:
-        print("Invalid input. Please enter a number for age.")
+        print("Invalid input. Age must be an integer.")
         return
 
-    # Validate Department
     department = input("Enter Department: ").strip()
     if not department:
         print("Department cannot be empty.")
         return
 
-    # Validate Email
     email = input("Enter Email: ").strip()
-    if not email or "@" not in email or "." not in email:
-        print("Invalid email format. Please enter a valid email address.")
+    if not email or "@" not in email:
+        print("Invalid email address.")
         return
 
-    # Validate Salary
     try:
         salary = float(input("Enter Salary: ").strip())
         if salary < 0:
             print("Salary cannot be negative.")
             return
     except ValueError:
-        print("Invalid input. Please enter a number for salary.")
+        print("Invalid input. Salary must be a number.")
         return
 
-    # Represent employee using a dictionary
-    new_employee = {
-        "employee_id": employee_id,
+    new_emp = {
+        "employee_id": emp_id,
         "name": name,
         "age": str(age),
         "department": department,
@@ -116,283 +86,121 @@ def add_employee():
         "salary": str(salary)
     }
 
-    # Write the employee record to CSV
-    try:
-        with open(FILE_NAME, mode="a", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
-            writer.writerow(new_employee)
-        print("\nEmployee added successfully.")
-    except (PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
+    employees.append(new_emp)
+    if save_employees(employees):
+        print("Employee added successfully.")
 
 
 def view_employees():
-    """
-    Reads all employee records from the CSV file and displays them in tabular format.
-    """
-    print("\n--- View Employees ---")
+    employees = load_employees()
+    if not employees:
+        print("No employee records found.")
+        return
 
-    try:
-        if not os.path.exists(FILE_NAME):
-            print("No employee records found.")
-            return
-
-        employees = []
-        with open(FILE_NAME, mode="r", newline="", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                employees.append(row)
-
-        if not employees:
-            print("No employee records found.")
-            return
-
-        # Display header and records in formatted table
-        print("-" * 75)
-        print(f"{'ID':<8}{'Name':<15}{'Age':<8}{'Department':<15}{'Email':<20}{'Salary':<10}")
-        print("-" * 75)
-        for emp in employees:
-            print(f"{emp['employee_id']:<8}{emp['name']:<15}{emp['age']:<8}{emp['department']:<15}{emp['email']:<20}{emp['salary']:<10}")
-        print("-" * 75)
-
-    except (FileNotFoundError, PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
+    print("\n" + "=" * 85)
+    print(f"{'ID':<10} {'Name':<15} {'Age':<6} {'Department':<15} {'Email':<25} {'Salary':<10}")
+    print("-" * 85)
+    for emp in employees:
+        print(f"{emp['employee_id']:<10} {emp['name']:<15} {emp['age']:<6} {emp['department']:<15} {emp['email']:<25} {emp['salary']:<10}")
+    print("=" * 85)
 
 
 def search_employee():
-    """
-    Searches for an employee record by Employee ID and displays their details.
-    """
-    print("\n--- Search Employee ---")
+    emp_id = input("Enter Employee ID to search: ").strip()
+    employees = load_employees()
 
-    employee_id = input("Enter Employee ID: ").strip()
-    if not employee_id:
-        print("Employee ID cannot be empty.")
-        return
-
-    try:
-        if not os.path.exists(FILE_NAME):
-            print("Employee not found.")
+    for emp in employees:
+        if emp["employee_id"] == emp_id:
+            print("\nEmployee Found:")
+            print(f"ID         : {emp['employee_id']}")
+            print(f"Name       : {emp['name']}")
+            print(f"Age        : {emp['age']}")
+            print(f"Department : {emp['department']}")
+            print(f"Email      : {emp['email']}")
+            print(f"Salary     : {emp['salary']}")
             return
 
-        found = False
-        with open(FILE_NAME, mode="r", newline="", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row["employee_id"] == employee_id:
-                    print("\nEmployee Found")
-                    print("-" * 30)
-                    print(f"Employee ID : {row['employee_id']}")
-                    print(f"Name        : {row['name']}")
-                    print(f"Age         : {row['age']}")
-                    print(f"Department  : {row['department']}")
-                    print(f"Email       : {row['email']}")
-                    print(f"Salary      : {row['salary']}")
-                    print("-" * 30)
-                    found = True
-                    break
-
-        if not found:
-            print("Employee not found.")
-
-    except (FileNotFoundError, PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
+    print("Employee not found.")
 
 
 def update_employee():
-    """
-    Updates details of an existing employee by Employee ID.
-    Employee ID remains unchanged.
-    """
-    print("\n--- Update Employee ---")
+    emp_id = input("Enter Employee ID to update: ").strip()
+    employees = load_employees()
 
-    employee_id = input("Enter Employee ID to update (or 'c' to cancel): ").strip()
-    if employee_id.lower() == "c":
-        print("Update cancelled.")
-        return
+    for emp in employees:
+        if emp["employee_id"] == emp_id:
+            print(f"\nUpdating details for {emp['name']} (leave blank to keep current):")
 
-    if not employee_id:
-        print("Employee ID cannot be empty.")
-        return
+            name = input(f"New Name [{emp['name']}]: ").strip()
+            if name:
+                emp["name"] = name
 
-    try:
-        if not os.path.exists(FILE_NAME):
-            print("Employee not found.")
+            age_input = input(f"New Age [{emp['age']}]: ").strip()
+            if age_input:
+                try:
+                    age = int(age_input)
+                    if age <= 0:
+                        print("Age must be greater than 0.")
+                        return
+                    emp["age"] = str(age)
+                except ValueError:
+                    print("Invalid input. Age must be an integer.")
+                    return
+
+            dept = input(f"New Department [{emp['department']}]: ").strip()
+            if dept:
+                emp["department"] = dept
+
+            email = input(f"New Email [{emp['email']}]: ").strip()
+            if email:
+                if "@" not in email:
+                    print("Invalid email address.")
+                    return
+                emp["email"] = email
+
+            salary_input = input(f"New Salary [{emp['salary']}]: ").strip()
+            if salary_input:
+                try:
+                    salary = float(salary_input)
+                    if salary < 0:
+                        print("Salary cannot be negative.")
+                        return
+                    emp["salary"] = str(salary)
+                except ValueError:
+                    print("Invalid input. Salary must be a number.")
+                    return
+
+            if save_employees(employees):
+                print("Employee updated successfully.")
             return
 
-        employees = []
-        found = False
-
-        with open(FILE_NAME, mode="r", newline="", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row["employee_id"] == employee_id:
-                    found = True
-                    print(f"\nEmployee found with Name: {row['name']}, Department: {row['department']}")
-                    print("(Press Enter to keep current value, or 'c' to cancel update)")
-
-                    # Name update
-                    name_input = input(f"Enter new Name [{row['name']}]: ").strip()
-                    if name_input.lower() == "c":
-                        print("Update cancelled.")
-                        return
-                    if name_input:
-                        new_name = name_input
-                    else:
-                        new_name = row["name"]
-
-                    # Age update
-                    age_input = input(f"Enter new Age [{row['age']}]: ").strip()
-                    if age_input.lower() == "c":
-                        print("Update cancelled.")
-                        return
-                    if age_input:
-                        try:
-                            new_age = int(age_input)
-                            if new_age < 18 or new_age > 65:
-                                print("Invalid age. Age must be between 18 and 65. Update cancelled.")
-                                return
-                        except ValueError:
-                            print("Invalid input. Please enter a number for age. Update cancelled.")
-                            return
-                    else:
-                        new_age = row["age"]
-
-                    # Department update
-                    dept_input = input(f"Enter new Department [{row['department']}]: ").strip()
-                    if dept_input.lower() == "c":
-                        print("Update cancelled.")
-                        return
-                    if dept_input:
-                        new_dept = dept_input
-                    else:
-                        new_dept = row["department"]
-
-                    # Email update
-                    email_input = input(f"Enter new Email [{row['email']}]: ").strip()
-                    if email_input.lower() == "c":
-                        print("Update cancelled.")
-                        return
-                    if email_input:
-                        if "@" not in email_input or "." not in email_input:
-                            print("Invalid email format. Update cancelled.")
-                            return
-                        new_email = email_input
-                    else:
-                        new_email = row["email"]
-
-                    # Salary update
-                    salary_input = input(f"Enter new Salary [{row['salary']}]: ").strip()
-                    if salary_input.lower() == "c":
-                        print("Update cancelled.")
-                        return
-                    if salary_input:
-                        try:
-                            new_salary = float(salary_input)
-                            if new_salary < 0:
-                                print("Salary cannot be negative. Update cancelled.")
-                                return
-                        except ValueError:
-                            print("Invalid input. Please enter a number for salary. Update cancelled.")
-                            return
-                    else:
-                        new_salary = row["salary"]
-
-                    # Update the record dictionary
-                    row["name"] = new_name
-                    row["age"] = str(new_age)
-                    row["department"] = new_dept
-                    row["email"] = new_email
-                    row["salary"] = str(new_salary)
-
-                employees.append(row)
-
-        if not found:
-            print("Employee not found.")
-            return
-
-        # Write updated list of employees back to CSV
-        with open(FILE_NAME, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
-            writer.writeheader()
-            writer.writerows(employees)
-
-        print("\nEmployee updated successfully.")
-
-    except (FileNotFoundError, PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
+    print("Employee not found.")
 
 
 def delete_employee():
-    """
-    Deletes an employee record by Employee ID after confirmation.
-    """
-    print("\n--- Delete Employee ---")
+    emp_id = input("Enter Employee ID to delete: ").strip()
+    employees = load_employees()
 
-    employee_id = input("Enter Employee ID to delete: ").strip()
-    if not employee_id:
-        print("Employee ID cannot be empty.")
-        return
-
-    try:
-        if not os.path.exists(FILE_NAME):
-            print("Employee not found.")
+    for i, emp in enumerate(employees):
+        if emp["employee_id"] == emp_id:
+            employees.pop(i)
+            if save_employees(employees):
+                print("Employee deleted successfully.")
             return
 
-        employees = []
-        found = False
-
-        with open(FILE_NAME, mode="r", newline="", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row["employee_id"] == employee_id:
-                    found = True
-                else:
-                    employees.append(row)
-
-        if not found:
-            print("Employee not found.")
-            return
-
-        confirm = input("Are you sure you want to delete this employee? (y/n): ").strip().lower()
-        if confirm == "y":
-            with open(FILE_NAME, mode="w", newline="", encoding="utf-8") as file:
-                writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
-                writer.writeheader()
-                writer.writerows(employees)
-            print("Employee deleted successfully.")
-        else:
-            print("Delete cancelled.")
-
-    except (FileNotFoundError, PermissionError, IOError) as e:
-        print("Error while accessing employee file:", e)
-
-
-def show_menu():
-    """
-    Prints the main interactive menu for the user.
-    """
-    print("\n========================================")
-    print("     EMPLOYEE RECORD MANAGEMENT SYSTEM")
-    print("========================================")
-    print("1. Add Employee")
-    print("2. View Employees")
-    print("3. Search Employee")
-    print("4. Update Employee")
-    print("5. Delete Employee")
-    print("6. Exit")
-    print("========================================")
+    print("Employee not found.")
 
 
 def main():
-    """
-    Main function to run the Employee Record Management System loop.
-    """
-    # Ensure CSV file and header exist
-    create_file()
-
     while True:
-        show_menu()
+        print("\n--- Employee Record Management System ---")
+        print("1. Add Employee")
+        print("2. View Employees")
+        print("3. Search Employee")
+        print("4. Update Employee")
+        print("5. Delete Employee")
+        print("6. Exit")
+
         choice = input("Enter your choice (1-6): ").strip()
 
         if choice == "1":
@@ -406,10 +214,10 @@ def main():
         elif choice == "5":
             delete_employee()
         elif choice == "6":
-            print("Thank you for using the system.")
+            print("Exiting application.")
             break
         else:
-            print("Invalid choice. Please enter a valid option between 1 and 6.")
+            print("Invalid choice. Please choose between 1 and 6.")
 
 
 if __name__ == "__main__":
